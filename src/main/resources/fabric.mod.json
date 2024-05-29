@@ -3,15 +3,14 @@
 	"id": "configurable-raids",
 	"version": "${version}",
 	"name": "Configurable Raids",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Make your own raids through JSON magic!",
 	"authors": [
-		"Me!"
+		"trashoflevillage"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/trashoflevillage/configurable-raids"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/configurable-raids/icon.png",
 	"environment": "*",
 	"entrypoints": {
