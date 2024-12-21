@@ -6,11 +6,20 @@ import net.minecraft.world.Difficulty;
 public class RaiderData {
     public String type;
     public float chance;
-    public String rider;
+    public RaiderData rider;
+    public int amount;
+    public Difficulty difficulty;
 
     public RaiderData(String type, float chance) {
         this.type = type;
         this.chance = chance;
+        this.amount = 1;
+    }
+
+    public RaiderData(String type, float chance, int amount) {
+        this.type = type;
+        this.chance = chance;
+        this.amount = amount;
     }
 
     public RaiderData(String type) {
@@ -23,8 +32,18 @@ public class RaiderData {
         return this;
     }
 
-    public RaiderData setRider(String type) {
-        rider = type;
+    public RaiderData setRider(RaiderData data) {
+        rider = data;
+        return this;
+    }
+
+    public RaiderData setAmount(int amount) {
+        amount = amount;
+        return this;
+    }
+
+    public RaiderData setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
         return this;
     }
 }

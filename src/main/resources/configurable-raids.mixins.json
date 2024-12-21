@@ -1,11 +1,12 @@
 {
-	"required": true,
-	"package": "io.github.trashoflevillage.configurable_raids.mixin",
-	"compatibilityLevel": "JAVA_17",
-	"mixins": [
-      "RaidMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
+  "required": true,
+  "package": "io.github.trashoflevillage.configurable_raids.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "HostileEntityMixin",
+    "RaidMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
 	}
 }

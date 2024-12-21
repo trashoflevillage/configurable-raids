@@ -1,34 +1,31 @@
 package io.github.trashoflevillage.configurable_raids.mixin;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import io.github.trashoflevillage.configurable_raids.ConfigurableRaids;
 import io.github.trashoflevillage.configurable_raids.RaiderData;
 import io.github.trashoflevillage.configurable_raids.WaveData;
+import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAccess;
+import io.github.trashoflevillage.configurable_raids.access.RaidMixinAccess;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.raid.RaiderEntity;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.village.raid.Raid;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
 
 @Mixin(Raid.class)
-public abstract class RaidMixin {
+public abstract class RaidMixin implements RaidMixinAccess {
 	@Shadow public abstract int getBadOmenLevel();
 	@Shadow public abstract void updateBar();
 	@Shadow public abstract void markDirty();
@@ -39,9 +36,16 @@ public abstract class RaidMixin {
 
 	@Final @Shadow private ServerWorld world;
 	@Shadow private Optional<BlockPos> preCalculatedRavagerSpawnLocation;
+	@Final
 	@Shadow private Random random;
 
 	@Shadow public abstract void setWaveCaptain(int wave, RaiderEntity entity);
+
+	@Unique
+	private final Map<Integer, Set<HostileEntity>> waveToCustomRaiders = Maps.newHashMap();
+
+	@Unique
+	private boolean noLeader = false;
 
 	/**
 	 * @author trashoflevillage
@@ -65,49 +69,71 @@ public abstract class RaidMixin {
 		int currentWave = this.wavesSpawned;
 		WaveData wave = ConfigurableRaids.WAVES.get(omen).get(currentWave);
 
-		ArrayList<RaiderEntity> entities = new ArrayList<>();
 		boolean noLeader = true;
 
 		// Spawn raiders
 		for (RaiderData r : wave.raiders) {
-			// Check if the mob should actually spawn.
-			if (this.random.nextFloat() < r.chance) {
-				RaiderEntity raider = (RaiderEntity)EntityType.get(r.type).get().create(this.world);
-
-				// For some reason, vanilla raid code checks this.
-				// I don't know why this needs a null check, and frankly, I'm not risking removing it.
-				if (raider == null) break;
-
-				if (noLeader && raider.canLead()) {
-					noLeader = false;
-					raider.setPatrolLeader(true);
-					this.setWaveCaptain(currentWave, raider);
-				}
-
-				this.addRaider(currentWave, raider, pos, false);
-
-				// Spawn passenger, if any exists.
-				if (r.rider != null) {
-					RaiderEntity raider2 = (RaiderEntity)EntityType.get(r.rider).get().create(this.world);
-					if (raider2 == null) break;
-
-					if (noLeader && raider2.canLead()) {
-						noLeader = false;
-						raider2.setPatrolLeader(true);
-						this.setWaveCaptain(currentWave, raider2);
-					}
-
-					this.addRaider(currentWave, raider2, pos, false);
-					raider2.refreshPositionAndAngles(pos, 0.0F, 0.0F);
-					raider2.startRiding(raider);
-				}
+			if (r.amount <= 0) {
+				r.amount = 1;
 			}
+
+			for (int i = 0; i < r.amount; i++)
+				this.trySpawnRaider(currentWave, r, pos);
 		}
 
 		this.preCalculatedRavagerSpawnLocation = Optional.empty();
 		++this.wavesSpawned;
 		this.updateBar();
 		this.markDirty();
+	}
+
+	private HostileEntity trySpawnRaider(int wave, RaiderData raider, BlockPos pos) {
+		if (raider.chance == 0.0F) {
+			raider.chance = 1.0F;
+		}
+
+		if (raider.difficulty == null) {
+			raider.difficulty = Difficulty.EASY;
+		}
+
+		if (this.world.getDifficulty().compareTo(raider.difficulty) >= 0 && this.random.nextFloat() < raider.chance) {
+			HostileEntity entity = (HostileEntity) EntityType.get(raider.type).get().create(this.world);
+			if (entity == null) return null;
+			if (entity instanceof RaiderEntity) {
+				RaiderEntity raiderEntity = (RaiderEntity) entity;
+
+				if (noLeader && raiderEntity.canLead()) {
+					noLeader = false;
+					raiderEntity.setPatrolLeader(true);
+					this.setWaveCaptain(wave, raiderEntity);
+				}
+
+				this.addRaider(wave, raiderEntity, pos, false);
+
+				// Spawn passenger, if any exists.
+				if (raider.rider != null) {
+					HostileEntity newEntity = trySpawnRaider(wave, raider.rider, pos);
+					if (newEntity != null) {
+						newEntity.refreshPositionAndAngles(pos, 0.0F, 0.0F);
+						newEntity.startRiding(raiderEntity);
+					}
+				}
+            } else {
+				this.configurable_raids$addRaider(wave, entity, pos, false);
+                entity.setPersistent();
+
+				// Spawn passenger, if any exists.
+				if (raider.rider != null) {
+					HostileEntity newEntity = trySpawnRaider(wave, raider.rider, pos);
+					if (newEntity != null) {
+						newEntity.refreshPositionAndAngles(pos, 0.0F, 0.0F);
+						newEntity.startRiding(entity);
+					}
+				}
+            }
+            return entity;
+        }
+		return null;
 	}
 
 	@ModifyReturnValue(method = "getMaxWaves", at = @At("RETURN"))
@@ -127,5 +153,77 @@ public abstract class RaidMixin {
 	@ModifyReturnValue(method = "hasExtraWave", at = @At("RETURN"))
 	private boolean hasExtraWave(boolean original) {
 		return false;
+	}
+
+
+	@Unique
+	public void configurable_raids$addRaider(int wave, HostileEntity raider, @Nullable BlockPos pos, boolean existing) {
+		HostileEntityMixinAccess raiderAccess = (HostileEntityMixinAccess)raider;
+		boolean bl = this.addToWave(wave, raider);
+		if (bl) {
+			raiderAccess.configurable_raids$setRaid((Raid)(Object)this);
+			raiderAccess.configurable_raids$setWave(wave);
+			raiderAccess.configurable_raids$setAbleToJoinRaid(true);
+			raiderAccess.configurable_raids$setOutOfRaidCounter(0);
+			if (!existing && pos != null) {
+				raider.setPosition((double)pos.getX() + 0.5, (double)pos.getY() + 1.0, (double)pos.getZ() + 0.5);
+				raider.initialize(this.world, this.world.getLocalDifficulty(pos), SpawnReason.EVENT, null);
+				raider.setOnGround(true);
+				this.world.spawnEntityAndPassengers(raider);
+			}
+		}
+	}
+
+	@Unique
+	public boolean addToWave(int wave, HostileEntity raider) {
+		return this.addToWave(wave, raider, true);
+	}
+
+	@Unique
+	public boolean addToWave(int wave, HostileEntity entity, boolean countHealth) {
+		this.waveToCustomRaiders.computeIfAbsent(wave, wavex -> Sets.newHashSet());
+		Set<HostileEntity> set = this.waveToCustomRaiders.get(wave);
+		HostileEntity raiderEntity = null;
+		for (HostileEntity raiderEntity2 : set) {
+			if (!raiderEntity2.getUuid().equals(entity.getUuid())) continue;
+			raiderEntity = raiderEntity2;
+			break;
+		}
+		if (raiderEntity != null) {
+			set.remove(raiderEntity);
+			set.add(entity);
+		}
+		set.add(entity);
+		if (countHealth) {
+			this.totalHealth += entity.getHealth();
+		}
+		this.updateBar();
+		this.markDirty();
+		return true;
+	}
+
+	@Unique
+	public Set<HostileEntity> getAllCustomRaiders() {
+		HashSet<HostileEntity> set = Sets.newHashSet();
+		for (Set<HostileEntity> set2 : this.waveToCustomRaiders.values()) {
+			set.addAll(set2);
+		}
+		return set;
+	}
+
+	@ModifyReturnValue(method = "getCurrentRaiderHealth", at = @At("TAIL"))
+	public float getCurrentRaiderHealth(float original) {
+		float f = 0.0f;
+		for (Set<HostileEntity> set : this.waveToCustomRaiders.values()) {
+			for (HostileEntity raiderEntity : set) {
+				f += raiderEntity.getHealth();
+			}
+		}
+		return f + original;
+	}
+
+	@ModifyReturnValue(method = "getRaiderCount", at = @At("TAIL"))
+	public int getRaiderCount(int original) {
+		return this.waveToCustomRaiders.values().stream().mapToInt(Set::size).sum() + original;
 	}
 }

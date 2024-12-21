@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "configurable-raids",
-	"version": "${version}",
+	"version": "1.0.2",
 	"name": "Configurable Raids",
 	"description": "Make your own raids through JSON magic!",
 	"authors": [
@@ -33,7 +33,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.15.11",
-		"minecraft": "~1.20.1",
+		"minecraft": "~1.21.1",
 		"java": ">=17",
 		"fabric-api": "*"
 	},

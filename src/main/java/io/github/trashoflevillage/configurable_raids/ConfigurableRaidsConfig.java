@@ -92,7 +92,7 @@ public class ConfigurableRaidsConfig {
                 .addRaider(new RaiderData("minecraft:vindicator", 0.5f), 2)
                 .addRaider(new RaiderData("minecraft:witch", 0.5f), 1)
                 .addRaider(new RaiderData("minecraft:evoker"), 1)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:pillager"), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:pillager")), 1)
         );
 
         // WAVE 6
@@ -114,8 +114,8 @@ public class ConfigurableRaidsConfig {
                 .addRaider(new RaiderData("minecraft:witch"), 1)
                 .addRaider(new RaiderData("minecraft:witch", 0.5f), 1)
                 .addRaider(new RaiderData("minecraft:evoker"), 2)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:vindicator"), 1)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:evoker"), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:vindicator")), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:evoker")), 1)
         );
 
 
@@ -162,7 +162,7 @@ public class ConfigurableRaidsConfig {
                 .addRaider(new RaiderData("minecraft:vindicator", 0.5f), 2)
                 .addRaider(new RaiderData("minecraft:witch", 0.5f), 1)
                 .addRaider(new RaiderData("minecraft:evoker"), 1)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:pillager"), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:pillager")), 1)
         );
 
         // WAVE 6
@@ -184,8 +184,8 @@ public class ConfigurableRaidsConfig {
                 .addRaider(new RaiderData("minecraft:witch"), 1)
                 .addRaider(new RaiderData("minecraft:witch", 0.5f), 1)
                 .addRaider(new RaiderData("minecraft:evoker"), 2)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:vindicator"), 1)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:evoker"), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:vindicator")), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:evoker")), 1)
         );
 
         // EXTRA WAVE / WAVE 8
@@ -197,9 +197,9 @@ public class ConfigurableRaidsConfig {
                 .addRaider(new RaiderData("minecraft:witch"), 1)
                 .addRaider(new RaiderData("minecraft:witch", 0.5f), 1)
                 .addRaider(new RaiderData("minecraft:evoker"), 2)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:vindicator"), 1)
-                .addRaider(new RaiderData("minecraft:ravager", 0.5f).setRider("minecraft:vindicator"), 1)
-                .addRaider(new RaiderData("minecraft:ravager").setRider("minecraft:evoker"), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:vindicator")), 1)
+                .addRaider(new RaiderData("minecraft:ravager", 0.5f).setRider(new RaiderData("minecraft:vindicator")), 1)
+                .addRaider(new RaiderData("minecraft:ravager").setRider(new RaiderData("minecraft:evoker")), 1)
         );
 
         config.put(0, waves);
