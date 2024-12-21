@@ -120,7 +120,6 @@ public abstract class RaidMixin implements RaidMixinAccess {
 				}
             } else {
 				this.configurable_raids$addRaider(wave, entity, pos, false);
-                entity.setPersistent();
 
 				// Spawn passenger, if any exists.
 				if (raider.rider != null) {
@@ -225,5 +224,18 @@ public abstract class RaidMixin implements RaidMixinAccess {
 	@ModifyReturnValue(method = "getRaiderCount", at = @At("TAIL"))
 	public int getRaiderCount(int original) {
 		return this.waveToCustomRaiders.values().stream().mapToInt(Set::size).sum() + original;
+	}
+
+	public void removeFromWave(HostileEntity entity, boolean countHealth) {
+		boolean bl;
+		Set<HostileEntity> set = this.waveToCustomRaiders.get(((HostileEntityMixinAccess)entity).getWave());
+		if (set != null && (bl = set.remove(entity))) {
+			if (countHealth) {
+				this.totalHealth -= entity.getHealth();
+			}
+			((HostileEntityMixinAccess)entity).setRaid(null);
+			this.updateBar();
+			this.markDirty();
+		}
 	}
 }

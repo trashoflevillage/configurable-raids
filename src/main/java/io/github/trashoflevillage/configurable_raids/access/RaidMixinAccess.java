@@ -6,4 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface RaidMixinAccess {
     void configurable_raids$addRaider(int wave, HostileEntity raider, @Nullable BlockPos pos, boolean existing);
+    void removeFromWave(HostileEntity entity, boolean countHealth);
+    boolean addToWave(int wave, HostileEntity entity, boolean countHealth);
 }

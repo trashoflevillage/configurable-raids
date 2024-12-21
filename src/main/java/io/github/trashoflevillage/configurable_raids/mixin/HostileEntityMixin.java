@@ -6,14 +6,24 @@ import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalAttack
 import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalMoveToRaidCenterGoal;
 import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalPatrolGoal;
 import net.minecraft.entity.*;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.mob.PatrolEntity;
+import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.raid.RaiderEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.raid.Raid;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
@@ -55,6 +65,11 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
         }
         nbt.putBoolean("PatrolLeader", this.patrolLeader);
         nbt.putBoolean("Patrolling", this.patrolling);
+        nbt.putInt("Wave", this.wave);
+        nbt.putBoolean("CanJoinRaid", this.ableToJoinRaid);
+        if (this.raid != null) {
+            nbt.putInt("RaidId", this.raid.getRaidId());
+        }
     }
 
     @Override
@@ -66,6 +81,16 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
         }
         this.patrolLeader = nbt.getBoolean("PatrolLeader");
         this.patrolling = nbt.getBoolean("Patrolling");
+        this.wave = nbt.getInt("Wave");
+        this.ableToJoinRaid = nbt.getBoolean("CanJoinRaid");
+        if (nbt.contains("RaidId", NbtElement.INT_TYPE)) {
+            if (this.getWorld() instanceof ServerWorld) {
+                this.raid = ((ServerWorld)this.getWorld()).getRaidManager().getRaid(nbt.getInt("RaidId"));
+            }
+            if (this.raid != null) {
+                ((RaidMixinAccess)this.raid).addToWave(this.wave, (HostileEntity)(Object)this, false);
+            }
+        }
     }
 
     @Override
@@ -84,9 +109,10 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
     @Override
     protected void initGoals() {
         super.initGoals();
-        this.goalSelector.add(4, new GlobalPatrolGoal<>((HostileEntity)(Object)this, 0.7, 0.595));
-        this.goalSelector.add(3, new GlobalMoveToRaidCenterGoal<>((HostileEntity)(Object)this));
-        this.goalSelector.add(4, new GlobalAttackHomeGoal((HostileEntity)(Object)this, 1.05f, 1));
+        HostileEntity entity = (HostileEntity)(Object)this;
+        this.goalSelector.add(4, new GlobalPatrolGoal<>(entity, 0.7, 0.595));
+        this.goalSelector.add(3, new GlobalMoveToRaidCenterGoal<>(entity));
+        this.goalSelector.add(4, new GlobalAttackHomeGoal(entity, 1.05f, 1));
     }
 
     @Override
@@ -171,6 +197,16 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
         this.outOfRaidCounter = outOfRaidCounter;
     }
 
+    @Override
+    public Integer getWave() {
+        return wave;
+    }
+
+    @Override
+    public void setRaid(Raid raid) {
+        this.raid = raid;
+    }
+
     @Inject(method = "tickMovement", at = @At("HEAD"))
     public void tickMovement(CallbackInfo ci) {
         if (this.getWorld() instanceof ServerWorld && this.isAlive()) {
@@ -189,5 +225,45 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
                 }
             }
         }
+    }
+
+    @Override
+    public void onDeath(DamageSource damageSource) {
+        HostileEntityMixinAccess entityAccess = (HostileEntityMixinAccess)(HostileEntity)(Object)this;
+        if (!((HostileEntity)(Object)this instanceof RaiderEntity)) {
+            if (this.getWorld() instanceof ServerWorld) {
+                Entity entity = damageSource.getAttacker();
+                Raid raid = entityAccess.configurable_raids$getRaid();
+                if (raid != null) {
+                    if (entity != null && entity.getType() == EntityType.PLAYER) {
+                        raid.addHero(entity);
+                    }
+                    ((RaidMixinAccess)raid).removeFromWave((HostileEntity)(Object)this, false);
+                }
+            }
+        }
+        super.onDeath(damageSource);
+    }
+
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        if (this.hasActiveRaid()) {
+            this.getRaid().updateBar();
+        }
+        return super.damage(source, amount);
+    }
+
+    @Override
+    public boolean cannotDespawn() {
+        return super.cannotDespawn() || this.configurable_raids$getRaid() != null;
+    }
+
+    public boolean hasActiveRaid() {
+        return this.getRaid() != null && this.getRaid().isActive();
+    }
+
+    @Override
+    public Raid getRaid() {
+        return this.raid;
     }
 }

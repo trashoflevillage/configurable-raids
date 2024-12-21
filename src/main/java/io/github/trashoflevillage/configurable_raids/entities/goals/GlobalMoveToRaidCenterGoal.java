@@ -1,6 +1,7 @@
 package io.github.trashoflevillage.configurable_raids.entities.goals;
 
 import com.google.common.collect.Sets;
+import io.github.trashoflevillage.configurable_raids.ConfigurableRaids;
 import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAccess;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.NoPenaltyTargeting;
@@ -31,7 +32,10 @@ public class GlobalMoveToRaidCenterGoal<T extends HostileEntity> extends Goal {
 
     @Override
     public boolean canStart() {
-        return ((MobEntity)this.actor).getTarget() == null && !((Entity)this.actor).hasPassengers() && ((HostileEntityMixinAccess)this.actor).configurable_raids$hasActiveRaid() && !((HostileEntityMixinAccess)this.actor).configurable_raids$getRaid().isFinished() && !((ServerWorld)((Entity)this.actor).getWorld()).isNearOccupiedPointOfInterest(((Entity)this.actor).getBlockPos());
+        if (actor instanceof RaiderEntity) return false;
+        boolean val = ((MobEntity)this.actor).getTarget() == null && !((Entity)this.actor).hasPassengers() && ((HostileEntityMixinAccess)this.actor).configurable_raids$hasActiveRaid() && !((HostileEntityMixinAccess)this.actor).configurable_raids$getRaid().isFinished() && !((ServerWorld)((Entity)this.actor).getWorld()).isNearOccupiedPointOfInterest(((Entity)this.actor).getBlockPos());
+        System.out.println("CAN START = " + val);
+        return val;
     }
 
     @Override

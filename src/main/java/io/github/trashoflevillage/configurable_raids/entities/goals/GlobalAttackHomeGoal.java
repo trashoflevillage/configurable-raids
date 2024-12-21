@@ -5,6 +5,7 @@ import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAc
 import net.minecraft.entity.ai.NoPenaltyTargeting;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.raid.RaiderEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -33,6 +34,7 @@ public class GlobalAttackHomeGoal extends Goal {
 
     @Override
     public boolean canStart() {
+        if (this.raider instanceof RaiderEntity) return false;
         this.purgeMemory();
         return this.isRaiding() && this.tryFindHome() && this.raider.getTarget() == null;
     }

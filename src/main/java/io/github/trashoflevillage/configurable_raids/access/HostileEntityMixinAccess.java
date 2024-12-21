@@ -3,6 +3,8 @@ package io.github.trashoflevillage.configurable_raids.access;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.village.raid.Raid;
 
+import java.awt.*;
+
 public interface HostileEntityMixinAccess {
     boolean configurable_raids$isRaidCenterSet();
     void configurable_raids$setPatrolling(boolean val);
@@ -20,4 +22,8 @@ public interface HostileEntityMixinAccess {
     void configurable_raids$setRaid(Raid raid);
     void configurable_raids$setWave(int wave);
     void configurable_raids$setOutOfRaidCounter(int i);
+    Integer getWave();
+    void setRaid(Raid raid);
+    boolean hasActiveRaid();
+    Raid getRaid();
 }
