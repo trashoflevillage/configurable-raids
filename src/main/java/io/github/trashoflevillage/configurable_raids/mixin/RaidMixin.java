@@ -228,12 +228,12 @@ public abstract class RaidMixin implements RaidMixinAccess {
 
 	public void removeFromWave(HostileEntity entity, boolean countHealth) {
 		boolean bl;
-		Set<HostileEntity> set = this.waveToCustomRaiders.get(((HostileEntityMixinAccess)entity).getWave());
+		Set<HostileEntity> set = this.waveToCustomRaiders.get(((HostileEntityMixinAccess)entity).configurable_raids$getWave());
 		if (set != null && (bl = set.remove(entity))) {
 			if (countHealth) {
 				this.totalHealth -= entity.getHealth();
 			}
-			((HostileEntityMixinAccess)entity).setRaid(null);
+			((HostileEntityMixinAccess)entity).configurable_raids$setRaid(null);
 			this.updateBar();
 			this.markDirty();
 		}

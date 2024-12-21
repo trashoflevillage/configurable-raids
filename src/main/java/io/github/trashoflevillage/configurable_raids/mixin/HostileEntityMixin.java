@@ -2,28 +2,18 @@ package io.github.trashoflevillage.configurable_raids.mixin;
 
 import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAccess;
 import io.github.trashoflevillage.configurable_raids.access.RaidMixinAccess;
-import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalAttackHomeGoal;
-import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalMoveToRaidCenterGoal;
-import io.github.trashoflevillage.configurable_raids.entities.goals.GlobalPatrolGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.mob.PatrolEntity;
-import net.minecraft.entity.passive.WolfEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.raid.RaiderEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.raid.Raid;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
@@ -105,15 +95,22 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
         this.configurable_raids$setAbleToJoinRaid(false);
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
-
-    @Override
-    protected void initGoals() {
-        super.initGoals();
-        HostileEntity entity = (HostileEntity)(Object)this;
-        this.goalSelector.add(4, new GlobalPatrolGoal<>(entity, 0.7, 0.595));
-        this.goalSelector.add(3, new GlobalMoveToRaidCenterGoal<>(entity));
-        this.goalSelector.add(4, new GlobalAttackHomeGoal(entity, 1.05f, 1));
-    }
+//
+//    @Inject(method = "<init>", at = @At("TAIL"))
+//    protected void init(EntityType entityType, World world, CallbackInfo ci) {
+//        if (world != null && !world.isClient) {
+//            this.initGoals();
+//        }
+//    }
+//
+//    protected void initGoals() {
+//        HostileEntity entity = (HostileEntity)(Object)this;
+//        if (!(entity instanceof RaiderEntity)) {
+//            this.goalSelector.add(4, new GlobalPatrolGoal<>(entity, 0.7, 0.595));
+//            this.goalSelector.add(3, new GlobalMoveToRaidCenterGoal<>(entity));
+//            this.goalSelector.add(4, new GlobalAttackHomeGoal(entity, 1.05f, 1));
+//        }
+//    }
 
     @Override
     public boolean configurable_raids$isRaidCenterSet() {
@@ -163,7 +160,7 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
 
     @Override
     public boolean configurable_raids$hasActiveRaid() {
-        return false;
+        return this.configurable_raids$getRaid() != null && this.configurable_raids$getRaid().isActive();
     }
 
     @Override
@@ -198,13 +195,8 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
     }
 
     @Override
-    public Integer getWave() {
+    public Integer configurable_raids$getWave() {
         return wave;
-    }
-
-    @Override
-    public void setRaid(Raid raid) {
-        this.raid = raid;
     }
 
     @Inject(method = "tickMovement", at = @At("HEAD"))
@@ -247,8 +239,8 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
 
     @Override
     public boolean damage(DamageSource source, float amount) {
-        if (this.hasActiveRaid()) {
-            this.getRaid().updateBar();
+        if (this.configurable_raids$hasActiveRaid()) {
+            this.configurable_raids$getRaid().updateBar();
         }
         return super.damage(source, amount);
     }
@@ -256,14 +248,5 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
     @Override
     public boolean cannotDespawn() {
         return super.cannotDespawn() || this.configurable_raids$getRaid() != null;
-    }
-
-    public boolean hasActiveRaid() {
-        return this.getRaid() != null && this.getRaid().isActive();
-    }
-
-    @Override
-    public Raid getRaid() {
-        return this.raid;
     }
 }
