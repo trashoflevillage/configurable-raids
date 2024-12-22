@@ -10,6 +10,7 @@ import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAc
 import io.github.trashoflevillage.configurable_raids.access.RaidMixinAccess;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.mob.AbstractPiglinEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.raid.RaiderEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -77,8 +78,15 @@ public abstract class RaidMixin implements RaidMixinAccess {
 				r.amount = 1;
 			}
 
-			for (int i = 0; i < r.amount; i++)
-				this.trySpawnRaider(currentWave, r, pos);
+			for (int i = 0; i < r.amount; i++) {
+				HostileEntity spawnedEntity = this.trySpawnRaider(currentWave, r, pos);
+				if (spawnedEntity != null) {
+					if (((HostileEntity)(Object)spawnedEntity) instanceof AbstractPiglinEntity) {
+						AbstractPiglinEntity piglin = (AbstractPiglinEntity)(HostileEntity)(Object)spawnedEntity;
+						piglin.setImmuneToZombification(true);
+					}
+				}
+			}
 		}
 
 		this.preCalculatedRavagerSpawnLocation = Optional.empty();

@@ -5,9 +5,7 @@ import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAc
 import io.github.trashoflevillage.configurable_raids.access.RaidMixinAccess;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.mob.PatrolEntity;
+import net.minecraft.entity.mob.*;
 import net.minecraft.entity.raid.RaiderEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -94,6 +92,7 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
             this.patrolling = true;
         }
         this.configurable_raids$setAbleToJoinRaid(false);
+
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
 //
