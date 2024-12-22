@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "configurable-raids",
-	"version": "1.0.2",
+	"version": "1.1.1",
 	"name": "Configurable Raids",
 	"description": "Make your own raids through JSON magic!",
 	"authors": [

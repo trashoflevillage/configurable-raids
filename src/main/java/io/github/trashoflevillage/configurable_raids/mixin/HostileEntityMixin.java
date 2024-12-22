@@ -1,5 +1,6 @@
 package io.github.trashoflevillage.configurable_raids.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import io.github.trashoflevillage.configurable_raids.access.HostileEntityMixinAccess;
 import io.github.trashoflevillage.configurable_raids.access.RaidMixinAccess;
 import net.minecraft.entity.*;
@@ -217,36 +218,5 @@ public class HostileEntityMixin extends PathAwareEntity implements HostileEntity
                 }
             }
         }
-    }
-
-    @Override
-    public void onDeath(DamageSource damageSource) {
-        HostileEntityMixinAccess entityAccess = (HostileEntityMixinAccess)(HostileEntity)(Object)this;
-        if (!((HostileEntity)(Object)this instanceof RaiderEntity)) {
-            if (this.getWorld() instanceof ServerWorld) {
-                Entity entity = damageSource.getAttacker();
-                Raid raid = entityAccess.configurable_raids$getRaid();
-                if (raid != null) {
-                    if (entity != null && entity.getType() == EntityType.PLAYER) {
-                        raid.addHero(entity);
-                    }
-                    ((RaidMixinAccess)raid).removeFromWave((HostileEntity)(Object)this, false);
-                }
-            }
-        }
-        super.onDeath(damageSource);
-    }
-
-    @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (this.configurable_raids$hasActiveRaid()) {
-            this.configurable_raids$getRaid().updateBar();
-        }
-        return super.damage(source, amount);
-    }
-
-    @Override
-    public boolean cannotDespawn() {
-        return super.cannotDespawn() || this.configurable_raids$getRaid() != null;
     }
 }
