@@ -29,7 +29,7 @@ public class LivingEntityMixin {
                         return !raider.hasActiveRaid();
                     } else {
                         HostileEntityMixinAccess raider = (HostileEntityMixinAccess) target;
-                        return !raider.configurable_raids$hasActiveRaid();
+                        return target.getType() != EntityType.VEX && !raider.configurable_raids$hasActiveRaid();
                     }
                 }
             }
